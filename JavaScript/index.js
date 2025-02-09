@@ -1,51 +1,75 @@
-var siteNameInput = document.getElementById("siteName");
-var siteURLInput = document.getElementById("siteURL");
-var siteContentInput = document.getElementById("siteContentInput");
+const siteNameInput = document.getElementById("siteName");
+const siteURLInput = document.getElementById("siteURL");
+const siteContentInput = document.getElementById("siteContentInput");
 
-var allSites = JSON.parse(localStorage.getItem("allSites")) || [];
+let allSites = JSON.parse(localStorage.getItem("allSites")) || [];
 
 function submitBtn() {
-    var Sites = {
-        nameSite: siteNameInput.value,
-        nameURL: siteURLInput.value,
-    };
+    const siteName = siteNameInput.value.trim();
+    const siteURL = siteURLInput.value.trim();
 
-    allSites.push(Sites);
+    if (!siteName || !siteURL) {
+        alert("Please fill in both fields.");
+        return;
+    }
+
+    if (!isValidURL(siteURL)) {
+        alert("Please enter a valid URL");
+        return;
+    }
+
+    if (
+        allSites.some((s) => s.nameSite === siteName || s.nameURL === siteURL)
+    ) {
+        alert("This site is already bookmarked.");
+        return;
+    }
+
+    const site = {
+        nameSite: siteName,
+        nameURL: siteURL,
+    };
+    allSites.push(site);
     localStorage.setItem("allSites", JSON.stringify(allSites));
     displaySites();
     clearForm();
+    alert("Bookmark added successfully!");
 }
 
 function displaySites() {
-    var cartoona = "";
+    let cartoona = "";
 
-    for (var i = 0; i < allSites.length; i++) {
+    allSites.forEach((site, index) => {
         cartoona += `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td>${allSites[i].nameSite}</td>
-                    <td>
-                        <a href="${allSites[i].nameURL}" class="btn btn-success" onclick="visitSite(${i})"><i class="fa-solid fa-eye"></i> Visit</a>
-                        
-                    </td>
-                    <td>
-                        <button class="btn btn-danger" onclick="deleteSite(${i})"><i class="fa-solid fa-trash-can"></i> Delete</button>
-                    </td>
-                </tr>
-                `;
-    }
+            <tr>
+                <td>${index + 1}</td>
+                <td>${site.nameSite}</td>
+                <td>
+                    <a href="${
+                        site.nameURL
+                    }" class="btn btn-success" onclick="visitSite(${index}); return false;"><i class="fa-solid fa-eye"></i> Visit</a>
+                </td>
+                <td>
+                    <button class="btn btn-danger" onclick="deleteSite(${index})"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                </td>
+            </tr>
+        `;
+    });
 
     siteContentInput.innerHTML = cartoona;
 }
 
 function deleteSite(index) {
-    allSites.splice(index, 1);
-    localStorage.setItem("allSites", JSON.stringify(allSites));
-    displaySites();
+    if (confirm("Are you sure you want to delete this bookmark?")) {
+        allSites.splice(index, 1);
+        localStorage.setItem("allSites", JSON.stringify(allSites));
+        displaySites();
+        alert("Bookmark deleted successfully!");
+    }
 }
 
 function visitSite(index) {
-    var url = allSites[index].nameURL;
+    let url = allSites[index].nameURL;
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
     }
@@ -56,3 +80,11 @@ function clearForm() {
     siteNameInput.value = "";
     siteURLInput.value = "";
 }
+
+function isValidURL(url) {
+    const urlPattern =
+        /^(https?:\/\/)?(www\.)?[\da-z\.-]+\.[a-z]{2,6}([\/\w \.-]*)*\/?$/;
+    return urlPattern.test(url);
+}
+
+displaySites();
